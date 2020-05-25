@@ -1,4 +1,5 @@
 import { Flash } from './flash';
+import Factory from './wasm/flash';
 
 const DEFAULT_CONFIGURATION = 1;
 const DEFAULT_CLASS = 0xFF;
@@ -28,7 +29,7 @@ export class DeviceWrapper {
 
     public async flash(_buffer: ArrayBuffer): Promise<void> {
 
-        const module = await flash(this);
+        const module = await Factory(this); // await flash(this);
 
         /*
         await this.flashimp.connect();
