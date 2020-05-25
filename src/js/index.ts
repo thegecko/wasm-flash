@@ -36,20 +36,17 @@ export class DeviceWrapper {
         await this.flashimp.disconnect();
         */
 
-        const complete = await module.ccall('GetPrimes',
-            'number',
-            ['number'],
-            [10000],
-            {
-                async: true
-            }
-        );
-        console.log(`3: ${complete}`);
+       const complete = await module.GetPrimes(20000);
+       console.log(`3: ${complete}`);
     }
 
-    protected async showMessage(message: string): Promise<number> {
+    /**
+     * Message logger
+     * @param message Message to log
+     */
+    protected async logMessage(message: string): Promise<number> {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log(`1: ${message}`);
+        console.log(message);
         return 1;
     }
 
@@ -107,7 +104,7 @@ export class DeviceWrapper {
      * Read from device
      * @returns Promise of data read
      */
-    protected async transferIn(): Promise<ArrayBuffer> {
+    protected async transferIn(): Promise<Uint8Array> {
         if (this.interfaceNumber === undefined) {
             throw new Error('No device opened');
         }
@@ -134,7 +131,7 @@ export class DeviceWrapper {
             );
         }
 
-        return result.data!.buffer;
+        return new Uint8Array(result.data!.buffer);
     }
 
     /**
@@ -142,7 +139,7 @@ export class DeviceWrapper {
      * @param data Data to write
      * @returns Promise
      */
-    protected async transferOut(data: ArrayBuffer): Promise<void> {
+    protected async transferOut(data: Uint8Array): Promise<void> {
         if (this.interfaceNumber === undefined) {
             throw new Error('No device opened');
         }
@@ -150,7 +147,7 @@ export class DeviceWrapper {
         // Shorten buffer
         const length = Math.min(data.byteLength, this.packetSize);
         const buffer = new Uint8Array(length);
-        buffer.set(new Uint8Array(data));
+        buffer.set(data);
 
         if (this.endpointOut) {
             // Use endpoint if it exists

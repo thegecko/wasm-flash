@@ -7,11 +7,11 @@
 #ifdef __cplusplus
 // So that the C++ compiler does not rename our function names
 extern "C" {
+    extern int logMessage(const char* message);
     extern void open();
     extern void close();
     extern uint8_t* transferIn();
     extern void transferOut(const uint8_t* data);
-    extern int showMessage(const char* message);
 #endif
 
     int IsPrime(int value) {
@@ -49,7 +49,7 @@ extern "C" {
         printf("\n");
         char buff[100];
         sprintf(buff,"completed to %d", end);
-        int success = showMessage(buff);
+        int success = logMessage(buff);
         printf("2: WEEEEEEE %d\n", success);
 
         return end;
