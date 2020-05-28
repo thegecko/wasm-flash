@@ -6,16 +6,16 @@ mergeInto(LibraryManager.library, {
             .catch(error => Module.logMessage(error));
         });
     },
-    open: function() {
+    usbOpen: function() {
         return Asyncify.handleSleep(wakeUp => {
-            Module.open()
+            Module.usbOpen()
             .then(result => wakeUp(result))
             .catch(error => Module.logMessage(error));
         });
     },
-    close: function() {
+    usbClose: function() {
         return Asyncify.handleSleep(wakeUp => {
-            Module.close()
+            Module.usbClose()
             .then(result => wakeUp(result))
             .catch(error => Module.logMessage(error));
         });
@@ -27,9 +27,9 @@ mergeInto(LibraryManager.library, {
             .catch(error => Module.logMessage(error));
         });
     },
-    transferOut: function(data) {
+    transferOut: function(pointer, size) {
         return Asyncify.handleSleep(wakeUp => {
-            Module.transferIn(data)
+            Module.transferOut(HEAPU8.slice(pointer, pointer + size))
             .then(result => wakeUp(result))
             .catch(error => Module.logMessage(error));
         });

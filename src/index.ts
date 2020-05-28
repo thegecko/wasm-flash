@@ -1,4 +1,3 @@
-import { Flash } from './flash';
 import Factory from './wasm/flash';
 
 const DEFAULT_CONFIGURATION = 1;
@@ -15,8 +14,6 @@ export class DeviceWrapper {
     protected endpointIn?: USBEndpoint;
     protected endpointOut?: USBEndpoint;
     
-    protected flashimp: Flash;
-
     constructor(
         protected device: USBDevice,
         protected interfaceClass = DEFAULT_CLASS,
@@ -24,38 +21,26 @@ export class DeviceWrapper {
         protected packetSize: number = DEFAULT_PACKETSIZE,
         protected alwaysControlTransfer: boolean = false
     ) {
-        this.flashimp = new Flash(device);
     }
 
-    public async flash(_buffer: ArrayBuffer): Promise<void> {
-
-        const module = await Factory(this); // await flash(this);
-
-        /*
-        await this.flashimp.connect();
-        await this.flashimp.flash(buffer);
-        await this.flashimp.disconnect();
-        */
-
-       const complete = await module.GetPrimes(20000);
-       console.log(`3: ${complete}`);
+    public async flash(buffer: ArrayBuffer): Promise<void> {
+        const module = await Factory(this);
+        await module.flash(buffer);
     }
 
     /**
      * Message logger
      * @param message Message to log
      */
-    protected async logMessage(message: string): Promise<number> {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    protected async logMessage(message: string): Promise<void> {
         console.log(message);
-        return 1;
     }
 
     /**
      * Open device
      * @returns Promise
      */
-    protected async open(): Promise<void> {
+    protected async usbOpen(): Promise<void> {
         await this.device.open();
         await this.device.selectConfiguration(this.configuration);
 
@@ -97,7 +82,7 @@ export class DeviceWrapper {
      * Close device
      * @returns Promise
      */
-    protected async close(): Promise<void> {
+    protected async usbClose(): Promise<void> {
         await this.device.close();
     }
 

@@ -1,5 +1,5 @@
 export interface FlashModule extends EmscriptenModule {
-    GetPrimes: (end: number) => Promise<number>;
+    flash: (data: ArrayBuffer) => Promise<boolean>;
 }
 
 export type ModuleFactory = (moduleOverrides?: any) => Promise<FlashModule>;

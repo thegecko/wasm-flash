@@ -135,7 +135,7 @@ export class Flash {
      * @param data Data to use
      * @returns Promise of DataView
      */
-    protected async send(command: number, data?: BufferSource): Promise<DataView> {
+    public async send(command: number, data?: BufferSource): Promise<DataView> {
         const array = this.bufferSourceToUint8Array(command, data);
         await this.sendMutex.lock();
 
@@ -197,7 +197,7 @@ export class Flash {
      * Read from device
      * @returns Promise of DataView
      */
-    protected async transferIn(): Promise<ArrayBuffer> {
+    public async transferIn(): Promise<ArrayBuffer> {
         if (this.interfaceNumber === undefined) {
             throw new Error('No device opened');
         }
@@ -232,13 +232,12 @@ export class Flash {
      * @param data Data to write
      * @returns Promise
      */
-    protected async transferOut(data: ArrayBuffer): Promise<void> {
+    public async transferOut(data: ArrayBuffer): Promise<void> {
         if (this.interfaceNumber === undefined) {
             throw new Error('No device opened');
         }
 
         const buffer = this.extendBuffer(data, this.packetSize);
-
         if (this.endpointOut) {
             // Use endpoint if it exists
             await this.device.transferOut(
@@ -264,7 +263,7 @@ export class Flash {
      * Open device
      * @returns Promise
      */
-    protected async open(): Promise<void> {
+    public async open(): Promise<void> {
         await this.device.open();
         await this.device.selectConfiguration(this.configuration);
 
@@ -306,7 +305,7 @@ export class Flash {
      * Close device
      * @returns Promise
      */
-    protected close(): Promise<void> {
+    public close(): Promise<void> {
         return this.device.close();
     }
 

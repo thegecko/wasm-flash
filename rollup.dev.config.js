@@ -37,7 +37,7 @@ export default {
         }),
         watch && serve({
             contentBase: '.',
-            open: true,
+            open: false,
             openPage: '/index.html',
         }),
         watch && livereload()
