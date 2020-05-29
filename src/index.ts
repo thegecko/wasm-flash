@@ -13,7 +13,7 @@ export class DeviceWrapper {
     protected interfaceNumber?: number;
     protected endpointIn?: USBEndpoint;
     protected endpointOut?: USBEndpoint;
-    
+
     constructor(
         protected device: USBDevice,
         protected interfaceClass = DEFAULT_CLASS,
@@ -87,40 +87,6 @@ export class DeviceWrapper {
     }
 
     /**
-     * Read from device
-     * @returns Promise of data read
-     */
-    protected async transferIn(): Promise<Uint8Array> {
-        if (this.interfaceNumber === undefined) {
-            throw new Error('No device opened');
-        }
-
-        let result: USBInTransferResult;
-
-        if (this.endpointIn) {
-            // Use endpoint if it exists
-            result = await this.device.transferIn(
-                this.endpointIn.endpointNumber,
-                this.packetSize
-            );
-        } else {
-            // Fallback to using control transfer
-            result = await this.device.controlTransferIn(
-                {
-                    requestType: 'class',
-                    recipient: 'interface',
-                    request: GET_REPORT,
-                    value: IN_REPORT,
-                    index: this.interfaceNumber
-                },
-                this.packetSize
-            );
-        }
-
-        return new Uint8Array(result.data!.buffer);
-    }
-
-    /**
      * Write to device
      * @param data Data to write
      * @returns Promise
@@ -154,5 +120,39 @@ export class DeviceWrapper {
                 buffer
             );
         }
+    }
+
+    /**
+     * Read from device
+     * @returns Promise of data read
+     */
+    protected async transferIn(): Promise<Uint8Array> {
+        if (this.interfaceNumber === undefined) {
+            throw new Error('No device opened');
+        }
+
+        let result: USBInTransferResult;
+
+        if (this.endpointIn) {
+            // Use endpoint if it exists
+            result = await this.device.transferIn(
+                this.endpointIn.endpointNumber,
+                this.packetSize
+            );
+        } else {
+            // Fallback to using control transfer
+            result = await this.device.controlTransferIn(
+                {
+                    requestType: 'class',
+                    recipient: 'interface',
+                    request: GET_REPORT,
+                    value: IN_REPORT,
+                    index: this.interfaceNumber
+                },
+                this.packetSize
+            );
+        }
+
+        return new Uint8Array(result.data!.buffer);
     }
 }

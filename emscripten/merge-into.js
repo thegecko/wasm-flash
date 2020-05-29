@@ -20,17 +20,22 @@ mergeInto(LibraryManager.library, {
             .catch(error => Module.logMessage(error));
         });
     },
-    transferIn: function() {
+    transferOut: function(pointer, size) {
         return Asyncify.handleSleep(wakeUp => {
-            Module.transferIn()
+            const data = HEAPU8.slice(pointer, pointer + size);
+            Module.transferOut(data)
             .then(result => wakeUp(result))
             .catch(error => Module.logMessage(error));
         });
     },
-    transferOut: function(pointer, size) {
+    transferIn: function() {
         return Asyncify.handleSleep(wakeUp => {
-            Module.transferOut(HEAPU8.slice(pointer, pointer + size))
-            .then(result => wakeUp(result))
+            Module.transferIn()
+            .then(result => {
+                const arrayPointer = Module._malloc(result.byteLength);
+                HEAPU8.set(result, arrayPointer);
+                wakeUp(arrayPointer);
+            })
             .catch(error => Module.logMessage(error));
         });
     }

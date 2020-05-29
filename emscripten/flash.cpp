@@ -5,15 +5,25 @@
   #include <emscripten.h>
 #endif
 
+#define DEFAULT_CLOCK_FREQUENCY 10000000
+#define DAP_OK 0x00
 #define DAP_CONNECT 0x02
 #define DAP_DISCONNECT 0x03
-#define DEFAULT_CLOCK_FREQUENCY 10000000
-#define DAP_SWJ_CLOCK 0x11
-#define SWD_SEQUENCE 0xE79E
-#define DAP_SWJ_SEQUENCE 0x12
 #define DAP_WRITE_ABORT 0x08
-#define DEFAULT_DAP_PROTOCOL 0
+#define DAP_DELAY 0x09
+#define DAP_RESET_TARGET 0x0A
+#define DAP_SWJ_CLOCK 0x11
+#define DAP_SWJ_SEQUENCE 0x12
+#define DAP_SWD_CONFIGURE 0x13
+#define DAP_SWD_SEQUENCE 0x1D
+#define DAP_SWO_TRANSPORT 0x17
+#define DAP_SWO_MODE 0x18
+#define DAP_SWO_CONTROL 0x1A
+#define DAP_JTAG_CONFIGURE 0x15
+#define DAP_JTAG_ID_CODE 0x16
 #define DAP_TRANSFER_CONFIGURE 0x04
+#define SWD_SEQUENCE 0xE79E
+#define DEFAULT_DAP_PROTOCOL 0
 #define DEFAULT_PAGE_SIZE 62
 #define FLASH_OPEN 0x8A
 #define FLASH_CLOSE 0x8B
@@ -23,6 +33,7 @@
 #define ABORT_MASK_STKERRCLR (1 << 2)
 #define ABORT_MASK_WDERRCLR (1 << 3)
 #define ABORT_MASK_ORUNERRCLR (1 << 4)
+#define CONNECT_RESPONSE_FAILED 0
 
 #define COUNT_OF(array) (sizeof(array) / sizeof(array[0]))
 
@@ -47,7 +58,7 @@ extern "C" {
         request[0] = command;
       
         for (int index = 1; index < sizeof(request); index++) {
-            request[index] = data[index];
+            request[index] = data[index - 1];
         }
 
         transferOut(request, sizeof(request));
@@ -57,29 +68,31 @@ extern "C" {
             char buff[100];
             sprintf(buff, "Bad response for %d -> %d", command, response[0]);
             logMessage(buff);
-            // throw new Error(buff);
+            throw buff;
         }
-/*
+
         switch (command) {
-            case DAPCommand.DAP_DISCONNECT:
-            case DAPCommand.DAP_WRITE_ABORT:
-            case DAPCommand.DAP_DELAY:
-            case DAPCommand.DAP_RESET_TARGET:
-            case DAPCommand.DAP_SWJ_CLOCK:
-            case DAPCommand.DAP_SWJ_SEQUENCE:
-            case DAPCommand.DAP_SWD_CONFIGURE:
-            case DAPCommand.DAP_SWD_SEQUENCE:
-            case DAPCommand.DAP_SWO_TRANSPORT:
-            case DAPCommand.DAP_SWO_MODE:
-            case DAPCommand.DAP_SWO_CONTROL:
-            case DAPCommand.DAP_JTAG_CONFIGURE:
-            case DAPCommand.DAP_JTAG_ID_CODE:
-            case DAPCommand.DAP_TRANSFER_CONFIGURE:
-                if (response[1] != DAPResponse.DAP_OK) {
-                    throw new Error(`Bad status for ${command} -> ${response.getUint8(1)}`);
+            case DAP_DISCONNECT:
+            case DAP_WRITE_ABORT:
+            case DAP_DELAY:
+            case DAP_RESET_TARGET:
+            case DAP_SWJ_CLOCK:
+            case DAP_SWJ_SEQUENCE:
+            case DAP_SWD_CONFIGURE:
+            case DAP_SWO_TRANSPORT:
+            case DAP_SWO_MODE:
+            case DAP_SWO_CONTROL:
+            case DAP_JTAG_CONFIGURE:
+            case DAP_JTAG_ID_CODE:
+            case DAP_TRANSFER_CONFIGURE:
+                if (response[1] != DAP_OK) {
+                    char buf2[100];
+                    sprintf(buf2, "Bad status for %d -> %d", command, response[1]);
+                    logMessage(buf2);
+                    throw buf2;
                 }
         }
-*/
+
         return response;
     }
 
@@ -101,19 +114,22 @@ extern "C" {
     }
 
     void swjSequence(uint8_t* sequence, uint8_t size) {
+        uint8_t data[size + 1];
         uint8_t bitLength = size*8;
-        uint8_t data[bitLength + 1];
         data[0] = bitLength;
       
         for (int index = 1; index < sizeof(data); index++) {
-            data[index] = sequence[index];
+            data[index] = sequence[index - 1];
         }
 
         send(DAP_SWJ_SEQUENCE, data, COUNT_OF(data));
     }
     
-    void selectProtocol(int sequence) {
-        uint8_t seq[] = { static_cast<uint8_t>(sequence) };             // Send protocol sequence
+    void selectProtocol(uint16_t sequence) {
+        uint8_t seq[2];
+        seq[0] = (uint8_t)sequence;
+        seq[1] = (uint8_t)(sequence >> 8);
+
         uint8_t seq1[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };  // Sequence of 1's
         uint8_t seqend[] = { 0x00 };
         swjSequence(seq1, COUNT_OF(seq1));
@@ -131,14 +147,15 @@ extern "C" {
         uint32_t clockdata[] = { DEFAULT_CLOCK_FREQUENCY };
         send(DAP_SWJ_CLOCK, (uint8_t*)clockdata, sizeof(clockdata));
         uint8_t data[] = { DEFAULT_DAP_PROTOCOL };
-        uint8_t* result = send(DAP_CONNECT, data, COUNT_OF(data));
-/*
-        if (result[1] == DAPConnectResponse.FAILED || this.mode != DAPProtocol.DEFAULT && result.getUint8(1) != this.mode) {
+        uint8_t *result = send(DAP_CONNECT, data, COUNT_OF(data));
+
+        if (result[1] == CONNECT_RESPONSE_FAILED) {
+            logMessage("Mode not enabled");
             clearAbort();
             usbClose();
-            throw new Error('Mode not enabled.');
+            throw "Mode not enabled";
         }
-*/
+
         configureTransfer(0, 100, 0);
         selectProtocol(SWD_SEQUENCE);
     }
@@ -158,8 +175,8 @@ extern "C" {
         uint8_t page[byteLength + 1];
         page[0] = byteLength;
 
-        for (int index = offset+1; index < end; index++) {
-            page[index] = buffer[index];
+        for (int index = 1; index < sizeof(page); index++) {
+            page[index] = buffer[offset + index - 1];
         }
 
         send(FLASH_WRITE, page, COUNT_OF(page));
@@ -175,8 +192,9 @@ extern "C" {
 
         // An error occurred
         if (result[1] != 0) {
+           logMessage("Flash open error");
            clearAbort();
-           // throw new Error('Flash error');
+           throw "Flash open error";
         }
 
         writeBuffer(buffer, DEFAULT_PAGE_SIZE, size, 0);
@@ -184,8 +202,9 @@ extern "C" {
 
         // An error occurred
         if (result2[1] != 0) {
+           logMessage("Flash close error");
            clearAbort();
-           // throw new Error('Flash error');
+           throw "Flash close error";
         }
 
         send(FLASH_RESET, NULL, 0);
