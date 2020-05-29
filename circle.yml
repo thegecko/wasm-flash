@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
       - run: npm install
-      - run: ~/emsdk/emsdk construct_env && npm run build:ci
+      - run: . ~/emsdk/emsdk_env.sh && npm run build:ci
       - persist_to_workspace:
           root: ../
           paths:
