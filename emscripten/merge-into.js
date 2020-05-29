@@ -6,6 +6,13 @@ mergeInto(LibraryManager.library, {
             .catch(error => Module.logMessage(`logMessage error: ${error.message}`));
         });
     },
+    emitProgress: function(percent) {
+        try {
+            Module.emit('progress', percent);
+        } catch (error) {
+            Module.logMessage(`emitProgress error: ${error.message}`);
+        }
+    },
     usbOpen: function() {
         return Asyncify.handleSleep(wakeUp => {
             Module.usbOpen()

@@ -41,6 +41,7 @@
 // So that the C++ compiler does not rename our function names
 extern "C" {
     extern void logMessage(const char* message);
+    extern void emitProgress(uint8_t percent);
     extern void usbOpen();
     extern void usbClose();
     extern uint8_t* transferIn();
@@ -170,6 +171,7 @@ extern "C" {
             }
 
             send(FLASH_WRITE, page, COUNT_OF(page));
+            emitProgress((offset * 100) / size);
             offset = end;
         }
     }

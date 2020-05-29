@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import Factory from './wasm/flash';
 
 const DEFAULT_CONFIGURATION = 1;
@@ -9,7 +10,7 @@ const SET_REPORT = 0x09;
 const OUT_REPORT = 0x200;
 const IN_REPORT = 0x100;
 
-export class DeviceWrapper {
+export class Flasher extends EventEmitter {
     protected interfaceNumber?: number;
     protected endpointIn?: USBEndpoint;
     protected endpointOut?: USBEndpoint;
@@ -21,6 +22,7 @@ export class DeviceWrapper {
         protected packetSize: number = DEFAULT_PACKETSIZE,
         protected alwaysControlTransfer: boolean = false
     ) {
+        super();
     }
 
     public async flash(buffer: ArrayBuffer): Promise<void> {

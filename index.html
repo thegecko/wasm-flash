@@ -168,15 +168,15 @@
             labelEl.textContent = state;
         }
 
-        const setTransfer = progress => {
-            if (!progress) {
+        const setTransfer = percent => {
+            if (!percent) {
                 statusEl.style.visibility = "hidden";
                 return;
             }
             selectEl.style.visibility = "hidden";
             statusEl.style.visibility = "visible";
-            barEl.style.width = `${progress * 100}%`;
-            transferEl.textContent = `${Math.ceil(progress * 100)}%`;
+            barEl.style.width = `${percent}%`;
+            transferEl.textContent = `${percent}%`;
         }
 
         // Load a firmware image
@@ -212,12 +212,13 @@
         const update = async device => {
             if (!buffer) return;
 
-            const flash = new wasmFlash.DeviceWrapper(device);
+            const flasher = new deviceWrapper.Flasher(device);
+            flasher.on("progress", percent => setTransfer(percent));
 
             try {
                 // Push binary to board
                 setStatus(`Flashing binary file ${buffer.byteLength} words long...`);
-                await flash.flash(buffer);
+                await flasher.flash(buffer);
 
                 setStatus("Flash complete!");
                 setTransfer();
