@@ -5,9 +5,8 @@ jobs:
     docker:
       - image: circleci/node:10
     steps:
-      - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
       - checkout
-      - run: npm install
+      - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk && npm install
       - run: npm run build
       - persist_to_workspace:
           root: ../
