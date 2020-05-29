@@ -3,21 +3,21 @@ mergeInto(LibraryManager.library, {
         return Asyncify.handleSleep(wakeUp => {
             Module.logMessage(Module.UTF8ToString(message))
             .then(result => wakeUp(result))
-            .catch(error => Module.logMessage(error));
+            .catch(error => Module.logMessage(`logMessage error: ${error.message}`));
         });
     },
     usbOpen: function() {
         return Asyncify.handleSleep(wakeUp => {
             Module.usbOpen()
             .then(result => wakeUp(result))
-            .catch(error => Module.logMessage(error));
+            .catch(error => Module.logMessage(`usbOpen error: ${error.message}`));
         });
     },
     usbClose: function() {
         return Asyncify.handleSleep(wakeUp => {
             Module.usbClose()
             .then(result => wakeUp(result))
-            .catch(error => Module.logMessage(error));
+            .catch(error => Module.logMessage(`usbClose error: ${error.message}`));
         });
     },
     transferOut: function(pointer, size) {
@@ -25,18 +25,18 @@ mergeInto(LibraryManager.library, {
             const data = HEAPU8.slice(pointer, pointer + size);
             Module.transferOut(data)
             .then(result => wakeUp(result))
-            .catch(error => Module.logMessage(error));
+            .catch(error => Module.logMessage(`transferOut error: ${error.message}`));
         });
     },
     transferIn: function() {
         return Asyncify.handleSleep(wakeUp => {
             Module.transferIn()
             .then(result => {
-                const arrayPointer = Module._malloc(result.byteLength);
-                HEAPU8.set(result, arrayPointer);
-                wakeUp(arrayPointer);
+                const pointer = stackAlloc(result.byteLength);
+                writeArrayToMemory(result, pointer);
+                wakeUp(pointer);
             })
-            .catch(error => Module.logMessage(error));
+            .catch(error => Module.logMessage(`transferIn error: ${error.message}`));
         });
     }
 });

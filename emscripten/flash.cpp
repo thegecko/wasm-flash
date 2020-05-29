@@ -47,12 +47,6 @@ extern "C" {
     extern void transferOut(const uint8_t* data, uint32_t size);
 #endif
 
-    void logNumber(uint32_t num) {
-        char buff[100];
-        sprintf(buff,"data: %d", num);
-        logMessage(buff);
-    }
-
     uint8_t* send(uint8_t command, uint8_t* data, uint32_t size) {
         uint8_t request[size + 1];
         request[0] = command;
@@ -138,11 +132,7 @@ extern "C" {
         swjSequence(seqend, COUNT_OF(seqend));
     }
 
-#ifdef __EMSCRIPTEN__
-  EMSCRIPTEN_KEEPALIVE
-#endif
     void connect() {
-        logMessage("connect");
         usbOpen();
         uint32_t clockdata[] = { DEFAULT_CLOCK_FREQUENCY };
         send(DAP_SWJ_CLOCK, (uint8_t*)clockdata, sizeof(clockdata));
@@ -160,29 +150,27 @@ extern "C" {
         selectProtocol(SWD_SEQUENCE);
     }
 
-#ifdef __EMSCRIPTEN__
-  EMSCRIPTEN_KEEPALIVE
-#endif
     void disconnect() {
-        logMessage("disconnect");
         send(DAP_DISCONNECT, NULL, 0);
         usbClose();
     }
 
-    void writeBuffer(uint8_t* buffer, uint8_t pageSize, uint32_t size, uint32_t offset) {
-        uint32_t end = fmin(size, offset + pageSize);
-        uint8_t byteLength = end - offset;
-        uint8_t page[byteLength + 1];
-        page[0] = byteLength;
+    void writeBuffer(uint8_t* buffer, uint8_t pageSize, uint32_t size) {
+        uint32_t offset = 0;
+        uint32_t end = 0;
 
-        for (int index = 1; index < sizeof(page); index++) {
-            page[index] = buffer[offset + index - 1];
-        }
+        while(end < size) {
+            end = fmin(size, offset + pageSize);
+            uint8_t byteLength = end - offset;
+            uint8_t page[byteLength + 1];
+            page[0] = byteLength;
 
-        send(FLASH_WRITE, page, COUNT_OF(page));
+            for (int index = 1; index < sizeof(page); index++) {
+                page[index] = buffer[offset + index - 1];
+            }
 
-        if (end < size) {
-            writeBuffer(buffer, pageSize, size, end);
+            send(FLASH_WRITE, page, COUNT_OF(page));
+            offset = end;
         }
     }
 
@@ -197,7 +185,7 @@ extern "C" {
            throw "Flash open error";
         }
 
-        writeBuffer(buffer, DEFAULT_PAGE_SIZE, size, 0);
+        writeBuffer(buffer, DEFAULT_PAGE_SIZE, size);
         uint8_t* result2 = send(FLASH_CLOSE, NULL, 0);
 
         // An error occurred
