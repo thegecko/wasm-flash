@@ -10,7 +10,7 @@ jobs:
       - run: ~/emsdk/emsdk install latest
       - run: ~/emsdk/emsdk activate latest
       - run: npm install
-      - run: npm run build
+      - run: . ~/emsdk/emsdk_env.sh && npm run build
       - persist_to_workspace:
           root: ../
           paths:
