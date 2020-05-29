@@ -9,9 +9,8 @@ jobs:
       - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
       - run: ~/emsdk/emsdk install latest
       - run: ~/emsdk/emsdk activate latest
-      - run: . ~/emsdk/emsdk_env.sh
       - run: npm install
-      - run: npm run build:ci
+      - run: . ~/emsdk/emsdk_env.sh && npm run build:ci
       - persist_to_workspace:
           root: ../
           paths:
