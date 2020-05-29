@@ -6,8 +6,10 @@ jobs:
       - image: circleci/node:10
     steps:
       - checkout
+      - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+      - run: ~/emsdk/emsdk construct_env
       - run: npm install
-      - run: git clone https://github.com/emscripten-core/emsdk.git ~/emsdk & npm run build
+      - run: npm run build:ci
       - persist_to_workspace:
           root: ../
           paths:

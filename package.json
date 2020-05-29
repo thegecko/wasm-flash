@@ -11,8 +11,10 @@
     "url": "git://github.com/thegecko/wasm-flash.git"
   },
   "scripts": {
-    "emscripten": ". ~/emsdk/emsdk_env.sh && emcc ./emscripten/flash.cpp -o ./src/wasm/flash.js --js-library ./emscripten/merge-into.js --post-js ./emscripten/post.js -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString'] -s MODULARIZE=1 -s EXPORT_ES6=1 -s ASYNCIFY=1 -s ASYNCIFY_IMPORTS=['logMessage','usbOpen','usbClose','transferIn','transferOut']",
+    "emscripten": ". ~/emsdk/emsdk_env.sh && npm run emcc",
+    "emcc": "emcc ./emscripten/flash.cpp -o ./src/wasm/flash.js --js-library ./emscripten/merge-into.js --post-js ./emscripten/post.js -s EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','UTF8ToString'] -s MODULARIZE=1 -s EXPORT_ES6=1 -s ASYNCIFY=1 -s ASYNCIFY_IMPORTS=['logMessage','usbOpen','usbClose','transferIn','transferOut']",
     "build": "npm run emscripten && rollup -c",
+    "build:ci": "npm run emcc && rollup -c",
     "watch": "npm run emscripten && rollup -c rollup.dev.config.js -w"
   },
   "devDependencies": {
